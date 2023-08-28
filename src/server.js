@@ -70,6 +70,7 @@ app.get('/get-tasks',(req,res) =>{
     
 })
 
+console.log("Hi")
 
 app.post('/add-card',(req,res) =>{
     const {value,id} = req.body
