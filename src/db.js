@@ -6,6 +6,7 @@ const createTable = (db) =>{
   db.exec(`
     CREATE TABLE TASKS (
       ID INTEGER PRIMARY KEY ,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       NAME VARCHAR(50),
       CARDS VARCHAR(100),
       COMPLETED BOOLEAN

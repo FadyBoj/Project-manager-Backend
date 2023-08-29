@@ -28,7 +28,7 @@ app.post('/',(req,res) =>{
     {
         const random_id = Math.floor(Math.random() * 999999999);
         let valid = true;
-        db.all(`SELECT * FROM TASKS`,(err,table) =>{
+        db.all(`SELECT * FROM TASKS `,(err,table) =>{
             
             table.forEach((row) =>{
                 if(row.ID === random_id)
@@ -61,16 +61,21 @@ app.post('/',(req,res) =>{
 
 app.get('/get-tasks',(req,res) =>{
     
-    let data = [];
 
-   db.all('SELECT * FROM TASKS',[],(err,rows) =>{
-    res.status(200).json(rows)
+   db.all('SELECT * FROM TASKS ORDER BY created_at',[],(err,rows) =>{
+
+    const readyTasks =rows.map((row) =>{
+        return row.CARDS ? {...row,CARDS:JSON.parse(row.CARDS)}:row
+    })
+
+    console.log(readyTasks)
+
+    res.status(200).json(readyTasks)
 
     })
     
 })
 
-console.log("Hi")
 
 app.post('/add-card',(req,res) =>{
     const {value,id} = req.body
@@ -80,21 +85,20 @@ app.post('/add-card',(req,res) =>{
         return console.log(err);
         if(!row.CARDS)
         {
-            const cardsArray = "[value]";
-            const buffer = Buffer.from(cardsArray,'utf-8');
+            const cardsArray = [value];
+            const buffer = Buffer.from(JSON.stringify(cardsArray),'utf-8');
             db.run(`
             UPDATE TASKS SET CARDS = ? WHERE ID = ?
             `,[buffer,id],(err)=>{console.log(err)})
         }
         else
         {
-            const cardsArray = [...row.CARDS ,value];
+            const cardsArray = [...JSON.parse(row.CARDS),value];
             const buffer = Buffer.from(JSON.stringify(cardsArray));
             db.run(`
             UPDATE TASKS SET CARDS = ? WHERE ID = ?
             `,[buffer,id],(err)=>{console.log(err)})
         }
-        console.log(row)
     })
 
 
@@ -103,7 +107,6 @@ app.post('/add-card',(req,res) =>{
             if(err)
             return console.log(err);
             
-            console.log(row)
         })
     },300)
 
