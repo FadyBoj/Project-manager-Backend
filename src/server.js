@@ -41,22 +41,19 @@ app.post('/',(req,res) =>{
             if(valid)
             {
             db.run(`
-                INSERT INTO TASKS (ID,NAME,COMPLETED) VALUES(
-                    ${random_id},
-                    '${title}',
-                    false
-                )
-            `)
+                INSERT INTO TASKS (ID,NAME,COMPLETED) VALUES(?,?,?)
+            `,[random_id,title,false],(err)=>{})
                 }
 
 
         })
+        res.status(200).json({msg:"Success",id:random_id})
+
     }
 
     generateId()    
     
 
-    res.status(200).json({msg:"Success"})
 })
 
 app.get('/get-tasks',(req,res) =>{
@@ -67,8 +64,6 @@ app.get('/get-tasks',(req,res) =>{
     const readyTasks =rows.map((row) =>{
         return row.CARDS ? {...row,CARDS:JSON.parse(row.CARDS)}:row
     })
-
-    console.log(readyTasks)
 
     res.status(200).json(readyTasks)
 
@@ -85,7 +80,7 @@ app.post('/add-card',(req,res) =>{
         return console.log(err);
         if(!row.CARDS)
         {
-            const cardsArray = [value];
+            const cardsArray = [{value:value,completed:false}];
             const buffer = Buffer.from(JSON.stringify(cardsArray),'utf-8');
             db.run(`
             UPDATE TASKS SET CARDS = ? WHERE ID = ?
@@ -93,7 +88,7 @@ app.post('/add-card',(req,res) =>{
         }
         else
         {
-            const cardsArray = [...JSON.parse(row.CARDS),value];
+            const cardsArray = [...JSON.parse(row.CARDS),{value:value,completed:false}];
             const buffer = Buffer.from(JSON.stringify(cardsArray));
             db.run(`
             UPDATE TASKS SET CARDS = ? WHERE ID = ?
@@ -115,14 +110,33 @@ app.post('/add-card',(req,res) =>{
     
 })
 
+// DELETE TASK
+
+app.put('/delete-task',(req,res) =>{
+    const {id,title} = req.body;
+
+    try {
+        db.run(`DELETE FROM TASKS WHERE ID = ?`,
+        [id],(err)=>{});
+        res.status(200).json({msg:`Task with the name '${title}' has been deleted`})
+    } catch (error) {
+        res.status(500).json({msg:"Something went wrong"})
+    }
+   
+
+})
+
+
+app.get('/get-single-card/:taskId/:cardId',(req,res) =>{
+    const { taskId , cardId } = req.params;
+    db.all(`SELECT CARDS FROM TASKS WHERE ID = ?`,[taskId],(err,row) =>{
+        const card = JSON.parse(row[0].CARDS)[Number(cardId)];
+        res.status(200).json({card:card}); 
+    })
+    
+})
+
 app.use(errorHandlerMiddleware)
-
-
-
-
-
-
-
 
 
 

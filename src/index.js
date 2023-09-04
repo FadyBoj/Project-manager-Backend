@@ -16,14 +16,14 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
-    autoHideMenuBar:true
+    autoHideMenuBar:true,
+    icon: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
   });
 
   // and load the index.html of the app.
   mainWindow.loadURL('http://localhost:8000');
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
 };
 
 app.on('ready',createWindow)
