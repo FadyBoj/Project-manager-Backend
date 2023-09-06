@@ -5,7 +5,7 @@ const path = require('path');
 const createDbConnection = require('./db');
 const db = require ('./db')
 const cors = require('cors');
-
+const  CustomAPIError  = require('./error/custom-error');
 const port = 8000;
 
 //middleware requires
@@ -135,6 +135,61 @@ app.get('/get-single-card/:taskId/:cardId',(req,res) =>{
     })
     
 })
+
+
+app.put('/update-card',(req,res) =>{
+    const {value,taskId,cardId} = req.body
+    let valid = true;
+    db.all(`SELECT CARDS FROM TASKS WHERE ID = ?`,[taskId],(err,row)=>{
+       const cards = JSON.parse(row[0].CARDS);
+       const cardValue = cards[Number(cardId)].value;
+
+       if(cardValue === value)
+       {
+          return res.status(400).json({msg:"Nothing new to be changed"});
+       }
+       if(!value)
+       {
+        return res.status(400).json({msg:"Can't assign the card value to nothing "});
+       }
+
+       const newCards = cards.map((card,index) =>{
+        return index === cardId ? {...card,value:value} : card
+       })
+
+       const bufferValue = Buffer.from(JSON.stringify(newCards),'utf-8')
+
+       db.run(`UPDATE TASKS SET CARDS = ? WHERE ID = ?`,[bufferValue,taskId],(err)=>{
+        if(err)
+        {
+            
+        }
+       })
+
+
+       res.status(200).json({msg:"Success"})
+
+    })
+})
+
+
+app.put('/delete-card',(req,res) =>{
+    const { taskId,cardId } = req.body
+
+    db.all(`SELECT CARDS FROM TASKS WHERE ID = ?`,[taskId],(err,row) =>{
+        const cards = JSON.parse(row[0].CARDS);
+        const newCards = cards.map((card,index) =>{
+            return index === cardId ? null : card
+        }).filter((card) => card !=null)
+
+        const bufferValue = Buffer.from(JSON.stringify(newCards),'utf-8');
+
+        db.run(`UPDATE TASKS SET CARDS = ? WHERE ID = ?`,[bufferValue,taskId],(err)=>{});
+
+        res.status(200).json({msg:"Success"})
+    })
+})
+
 
 app.use(errorHandlerMiddleware)
 
